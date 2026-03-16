@@ -444,6 +444,6 @@ export const CONTACT_INFO = [
   {
     icon: "🕐",
     label: "Hours",
-    value: "Mon–Fri: 7AM–10PM · Sat–Sun: 9AM–9PM",
+    value: "Mon–Fri: 7AM–7PM · Sat–Sun: 9AM–9PM",
   },
 ];

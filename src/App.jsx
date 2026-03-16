@@ -37,7 +37,10 @@ export default function App() {
   const [lastOrder, setLastOrder] = useState(null);
   const [trackResult, setTrackResult] = useState(null);
 
-  const currentFood = useMemo(() => FOODS.find((food) => food.id === currentFoodId), [currentFoodId]);
+  const currentFood = useMemo(
+    () => FOODS.find((food) => food.id === currentFoodId),
+    [currentFoodId],
+  );
 
   const popularFoods = useMemo(() => FOODS.slice(0, 8), []);
   const restPreview = useMemo(() => RESTS.slice(0, 3), []);
@@ -45,11 +48,14 @@ export default function App() {
   const filteredFoods = useMemo(() => {
     let list = [...FOODS];
     if (restFilter) list = list.filter((food) => food.rest === restFilter);
-    if (activeFilter !== "all") list = list.filter((food) => food.tag === activeFilter);
+    if (activeFilter !== "all")
+      list = list.filter((food) => food.tag === activeFilter);
     if (search) {
       const query = search.toLowerCase();
       list = list.filter(
-        (food) => food.name.toLowerCase().includes(query) || food.desc.toLowerCase().includes(query)
+        (food) =>
+          food.name.toLowerCase().includes(query) ||
+          food.desc.toLowerCase().includes(query),
       );
     }
     return list;
@@ -70,7 +76,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const lock = drawerOpen || cartOpen || loginOpen || signupOpen || currentFoodId !== null;
+    const lock =
+      drawerOpen ||
+      cartOpen ||
+      loginOpen ||
+      signupOpen ||
+      currentFoodId !== null;
     document.body.style.overflow = lock ? "hidden" : "";
   }, [drawerOpen, cartOpen, loginOpen, signupOpen, currentFoodId]);
 
@@ -78,7 +89,11 @@ export default function App() {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToasts((prev) => [...prev, { id, type, message, leaving: false }]);
     setTimeout(() => {
-      setToasts((prev) => prev.map((toast) => (toast.id === id ? { ...toast, leaving: true } : toast)));
+      setToasts((prev) =>
+        prev.map((toast) =>
+          toast.id === id ? { ...toast, leaving: true } : toast,
+        ),
+      );
     }, 3200);
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
@@ -93,7 +108,10 @@ export default function App() {
 
   const toggleTheme = () => {
     document.documentElement.classList.toggle("light");
-    localStorage.setItem("cbTheme", document.documentElement.classList.contains("light") ? "light" : "dark");
+    localStorage.setItem(
+      "cbTheme",
+      document.documentElement.classList.contains("light") ? "light" : "dark",
+    );
   };
 
   const addToCart = (id, qty = 1) => {
@@ -102,7 +120,9 @@ export default function App() {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === id);
       if (existing) {
-        return prev.map((item) => (item.id === id ? { ...item, qty: item.qty + qty } : item));
+        return prev.map((item) =>
+          item.id === id ? { ...item, qty: item.qty + qty } : item,
+        );
       }
       return [...prev, { ...food, qty }];
     });
@@ -112,8 +132,10 @@ export default function App() {
   const changeQty = (id, delta) => {
     setCart((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, qty: item.qty + delta } : item))
-        .filter((item) => item.qty > 0)
+        .map((item) =>
+          item.id === id ? { ...item, qty: item.qty + delta } : item,
+        )
+        .filter((item) => item.qty > 0),
     );
   };
 
@@ -193,7 +215,8 @@ export default function App() {
       return;
     }
     const restNames = RESTS.map((rest) => rest.name);
-    const rest = lastOrder?.rest || restNames[getRandomInt(0, restNames.length - 1)];
+    const rest =
+      lastOrder?.rest || restNames[getRandomInt(0, restNames.length - 1)];
     const now = new Date();
     const times = [
       new Date(now - 14 * 60000),
@@ -273,7 +296,10 @@ export default function App() {
 
       <ToastStack toasts={toasts} />
 
-      <CartFab count={cart.reduce((sum, item) => sum + item.qty, 0)} onOpen={() => setCartOpen(true)} />
+      <CartFab
+        count={cart.reduce((sum, item) => sum + item.qty, 0)}
+        onOpen={() => setCartOpen(true)}
+      />
 
       <CartSidebar
         open={cartOpen}
@@ -328,7 +354,9 @@ export default function App() {
           onOpenRestaurant={openRestaurant}
         />
       )}
-      {page === "restaurants" && <RestaurantsPage rests={RESTS} onOpenRestaurant={openRestaurant} />}
+      {page === "restaurants" && (
+        <RestaurantsPage rests={RESTS} onOpenRestaurant={openRestaurant} />
+      )}
       {page === "menu" && (
         <MenuPage
           title={menuTitle}
@@ -349,9 +377,24 @@ export default function App() {
           onClearRestaurantFilter={clearRestaurantFilter}
         />
       )}
-      {page === "checkout" && <CheckoutPage cart={cart} totals={totals} onPlaceOrder={placeOrder} onNavigate={handleNavigate} />}
-      {page === "success" && <SuccessPage orderId={lastOrder?.orderId} eta={lastOrder?.eta} onNavigate={handleNavigate} />}
-      {page === "track" && <TrackPage trackResult={trackResult} onTrack={trackOrder} />}
+      {page === "checkout" && (
+        <CheckoutPage
+          cart={cart}
+          totals={totals}
+          onPlaceOrder={placeOrder}
+          onNavigate={handleNavigate}
+        />
+      )}
+      {page === "success" && (
+        <SuccessPage
+          orderId={lastOrder?.orderId}
+          eta={lastOrder?.eta}
+          onNavigate={handleNavigate}
+        />
+      )}
+      {page === "track" && (
+        <TrackPage trackResult={trackResult} onTrack={trackOrder} />
+      )}
       {page === "about" && <AboutPage onSendMessage={handleMessage} />}
 
       <Footer onNavigate={handleNavigate} />
