@@ -1,4 +1,10 @@
-﻿export default function MobileDrawer({ open, onClose, onNavigate, onOpenLogin, onOpenSignup }) {
+﻿export default function MobileDrawer({
+  open,
+  onClose,
+  onNavigate,
+  onOpenLogin,
+  onOpenSignup,
+}) {
   return (
     <div className={`mobile-drawer ${open ? "open" : ""}`} id="mobileDrawer">
       <button className="drawer-close" onClick={onClose}>
@@ -8,6 +14,7 @@
       <a onClick={() => onNavigate("restaurants")}>🏪 Restaurants</a>
       <a onClick={() => onNavigate("menu")}>🍽️ Menu</a>
       <a onClick={() => onNavigate("track")}>📍 Track Order</a>
+      <a onClick={() => onNavigate("vendor")}>🧾 Become a Vendor</a>
       <a onClick={() => onNavigate("about")}>ℹ️ About</a>
       <div className="mob-btns">
         <button className="btn btn-ghost" onClick={onOpenLogin}>

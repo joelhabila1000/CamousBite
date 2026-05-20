@@ -15,28 +15,54 @@
           </button>
         </div>
         <div className="modal-body">
-          <p className="sub">Sign in to your CampusBite account</p>
+          <p className="sub">Sign in to your J ORDER account</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
             <div className="f-group">
               <label>Email / Student ID</label>
-              <input className="f-inp" type="email" placeholder="student@university.edu.ng" />
+              <input
+                className="f-inp"
+                type="email"
+                placeholder="student@university.edu.ng"
+              />
             </div>
             <div className="f-group">
               <label>Password</label>
               <input className="f-inp" type="password" placeholder="••••••••" />
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".8rem" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: ".8rem",
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  cursor: "pointer",
+                }}
+              >
                 <input type="checkbox" /> Remember me
               </label>
-              <a href="#" style={{ color: "var(--orange)", textDecoration: "none" }}>
+              <a
+                href="#"
+                style={{ color: "var(--orange)", textDecoration: "none" }}
+              >
                 Forgot password?
               </a>
             </div>
             <button className="btn btn-primary btn-full" onClick={onLogin}>
               Sign In →
             </button>
-            <p style={{ textAlign: "center", fontSize: ".82rem", color: "var(--text2)" }}>
+            <p
+              style={{
+                textAlign: "center",
+                fontSize: ".82rem",
+                color: "var(--text2)",
+              }}
+            >
               No account?{" "}
               <a
                 href="#"
@@ -67,7 +93,7 @@ export function SignupModal({ open, onClose, onSwitch, onRegister }) {
     >
       <div className="modal">
         <div className="modal-head">
-          <h2>Join CampusBite 🎓</h2>
+          <h2>Join J ORDER 🎓</h2>
           <button className="icon-btn" onClick={onClose}>
             ✕
           </button>
@@ -93,7 +119,11 @@ export function SignupModal({ open, onClose, onSwitch, onRegister }) {
             </div>
             <div className="f-group full">
               <label>University Email</label>
-              <input className="f-inp" type="email" placeholder="john.doe@university.edu.ng" />
+              <input
+                className="f-inp"
+                type="email"
+                placeholder="john.doe@university.edu.ng"
+              />
             </div>
             <div className="f-group full">
               <label>Default Delivery Address</label>
@@ -108,11 +138,20 @@ export function SignupModal({ open, onClose, onSwitch, onRegister }) {
               <input className="f-inp" type="password" placeholder="••••••••" />
             </div>
           </div>
-          <button className="btn btn-primary btn-full" style={{ marginTop: 18 }} onClick={onRegister}>
+          <button
+            className="btn btn-primary btn-full"
+            style={{ marginTop: 18 }}
+            onClick={onRegister}
+          >
             Create Account →
           </button>
           <p
-            style={{ textAlign: "center", fontSize: ".82rem", color: "var(--text2)", marginTop: 14 }}
+            style={{
+              textAlign: "center",
+              fontSize: ".82rem",
+              color: "var(--text2)",
+              marginTop: 14,
+            }}
           >
             Have an account?{" "}
             <a

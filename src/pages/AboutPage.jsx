@@ -1,6 +1,29 @@
 ﻿import { ABOUT_STATS, CONTACT_INFO } from "../data.js";
-
+import emailjs from "@emailjs/browser";
+import { useRef } from "react";
 export default function AboutPage({ onSendMessage }) {
+  const form = useRef();
+
+  const sendEmail = (e) => {
+    e.preventDefault();
+
+    emailjs
+      .sendForm("service_ycfdxyx", "template_mq9n9nk", form.current, {
+        publicKey: "NfnPzCcTbfI2haHaR",
+      })
+      .then(
+        () => {
+          console.log("SUCCESS!");
+          alert("Message Sent Successfully!");
+          e.target.reset();
+        },
+        (error) => {
+          console.log("FAILED...", error.text);
+          alert("Something went wrong!");
+        },
+      );
+  };
+
   return (
     <div className="page active" id="page-about">
       <section className="section" style={{ paddingTop: 100 }}>
@@ -111,24 +134,35 @@ export default function AboutPage({ onSendMessage }) {
               <h4 style={{ marginBottom: 18, fontSize: "1rem" }}>
                 Send us a message
               </h4>
-              <div
+              <form
+                ref={form}
+                onSubmit={sendEmail}
                 style={{ display: "flex", flexDirection: "column", gap: 12 }}
               >
-                <input className="f-inp" placeholder="Your Name" />
-                <input className="f-inp" placeholder="Your Email" />
-                <input className="f-inp" placeholder="Subject" />
+                <input
+                  className="f-inp"
+                  name="from_name"
+                  placeholder="Your Name"
+                />
+                <input
+                  className="f-inp"
+                  name="reply_to"
+                  placeholder="Your Email"
+                />
+                <input className="f-inp" name="subject" placeholder="Subject" />
                 <textarea
                   className="f-inp"
+                  name="message"
                   placeholder="Your message..."
-                  style={{ minHeight: 90, resize: "vertical" }}
                 />
                 <button
+                  type="submit"
                   className="btn btn-primary btn-full"
                   onClick={onSendMessage}
                 >
                   Send Message
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>

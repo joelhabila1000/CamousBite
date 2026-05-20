@@ -12,12 +12,19 @@ export default function FoodCard({ food, onOpen, onAdd, onToggleFav }) {
   const badge = food.badge && badgeMap[food.badge] ? badgeMap[food.badge] : "";
   const badgeClass = badge ? badge.split(" ")[0] : "";
   const badgeLabel = badge ? badge.slice(badge.indexOf(" ") + 1) : "";
+  const isSoldOut = food.stock === 0 || food.available === false;
 
   return (
-    <div className="food-card" data-tag={food.tag} data-id={food.id} onClick={() => onOpen(food.id)}>
+    <div
+      className={`food-card ${isSoldOut ? "sold" : ""}`}
+      data-tag={food.tag}
+      data-id={food.id}
+      onClick={() => onOpen(food.id)}
+    >
       <div className="food-thumb">
         {food.emoji}
         {badge && <span className={`food-badge ${badgeClass}`}>{badgeLabel}</span>}
+        {isSoldOut && <span className="food-badge fb-sold">Sold Out</span>}
         <button
           className="fav-btn"
           onClick={(event) => {
@@ -45,10 +52,12 @@ export default function FoodCard({ food, onOpen, onAdd, onToggleFav }) {
             className="add-btn"
             onClick={(event) => {
               event.stopPropagation();
-              onAdd(food.id);
+              if (!isSoldOut) onAdd(food.id);
             }}
+            disabled={isSoldOut}
+            title={isSoldOut ? "Sold out" : "Add to cart"}
           >
-            +
+            {isSoldOut ? "×" : "+"}
           </button>
         </div>
       </div>

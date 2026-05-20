@@ -12,6 +12,8 @@ export default function LandingPage({
   onCopyPromo,
   onOpenRestaurant,
 }) {
+  const orderFromHeroCard = () => onNavigate("menu");
+
   return (
     <div className="page active" id="page-landing">
       <section className="hero">
@@ -71,7 +73,16 @@ export default function LandingPage({
             </div>
             <div className="hc-status">
               <span className="hc-dot" />
+              <span>Campus riders are active now</span>
             </div>
+            <button
+              type="button"
+              className="hc-order-btn"
+              onMouseDown={orderFromHeroCard}
+              onClick={orderFromHeroCard}
+            >
+              Order Now
+            </button>
           </div>
         </div>
       </section>

@@ -14,10 +14,12 @@ import CheckoutPage from "./pages/CheckoutPage.jsx";
 import SuccessPage from "./pages/SuccessPage.jsx";
 import TrackPage from "./pages/TrackPage.jsx";
 import AboutPage from "./pages/AboutPage.jsx";
+import VendorPage from "./pages/VendorPage.jsx";
 import { CATEGORIES, FOODS, RESTS } from "./data.js";
 import { clampQty, formatTimeLabel, getRandomInt } from "./utils.js";
 
 const PROMO_CODES = ["NEWSTUDENT50", "LUNCHFREE", "STUDYCOMBO"];
+const VENDOR_TOKEN_KEY = "vendorToken";
 
 export default function App() {
   const [page, setPage] = useState("landing");
@@ -36,17 +38,49 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [lastOrder, setLastOrder] = useState(null);
   const [trackResult, setTrackResult] = useState(null);
-
-  const currentFood = useMemo(
-    () => FOODS.find((food) => food.id === currentFoodId),
-    [currentFoodId],
+  const [publicVendors, setPublicVendors] = useState([]);
+  const [publicProducts, setPublicProducts] = useState([]);
+  const [currentVendor, setCurrentVendor] = useState(null);
+  const [vendorProducts, setVendorProducts] = useState([]);
+  const [vendorOrders, setVendorOrders] = useState([]);
+  const [vendorToken, setVendorToken] = useState(
+    () => localStorage.getItem(VENDOR_TOKEN_KEY) || "",
   );
 
-  const popularFoods = useMemo(() => FOODS.slice(0, 8), []);
-  const restPreview = useMemo(() => RESTS.slice(0, 3), []);
+  const vendorRests = useMemo(
+    () =>
+      publicVendors.map((vendor, index) => ({
+        name: vendor.storeName,
+        emoji: vendor.emoji,
+        banner: vendor.banner,
+        tags: [vendor.category, vendor.campus],
+        rating: "4.7",
+        time: vendor.hours || "15 min",
+        orders: "New",
+        open: vendor.open,
+        index,
+      })),
+    [publicVendors],
+  );
+
+  const allFoods = useMemo(
+    () => [...publicProducts, ...FOODS],
+    [publicProducts],
+  );
+
+  const currentFood = useMemo(
+    () => allFoods.find((food) => food.id === currentFoodId),
+    [currentFoodId, allFoods],
+  );
+
+  const popularFoods = useMemo(() => allFoods.slice(0, 8), [allFoods]);
+  const restPreview = useMemo(
+    () => [...vendorRests, ...RESTS].slice(0, 3),
+    [vendorRests],
+  );
 
   const filteredFoods = useMemo(() => {
-    let list = [...FOODS];
+    let list = [...allFoods];
     if (restFilter) list = list.filter((food) => food.rest === restFilter);
     if (activeFilter !== "all")
       list = list.filter((food) => food.tag === activeFilter);
@@ -59,7 +93,7 @@ export default function App() {
       );
     }
     return list;
-  }, [activeFilter, restFilter, search]);
+  }, [activeFilter, restFilter, search, allFoods]);
 
   const totals = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -85,6 +119,29 @@ export default function App() {
     document.body.style.overflow = lock ? "hidden" : "";
   }, [drawerOpen, cartOpen, loginOpen, signupOpen, currentFoodId]);
 
+  const apiRequest = async (path, options = {}) => {
+    const {
+      method = "GET",
+      body,
+      auth = false,
+      token: tokenOverride,
+    } = options;
+    const headers = { "Content-Type": "application/json" };
+    const token = tokenOverride || vendorToken;
+    if (auth && token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    return { ok: response.ok, status: response.status, data };
+  };
+
   const addToast = (type, message) => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToasts((prev) => [...prev, { id, type, message, leaving: false }]);
@@ -99,6 +156,43 @@ export default function App() {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 3520);
   };
+
+  const loadPublicData = async () => {
+    const [vendorsRes, productsRes] = await Promise.all([
+      apiRequest("/api/public/vendors"),
+      apiRequest("/api/public/products"),
+    ]);
+    if (vendorsRes.ok) setPublicVendors(vendorsRes.data.vendors || []);
+    if (productsRes.ok) setPublicProducts(productsRes.data.products || []);
+  };
+
+  const loadVendorData = async (tokenOverride = vendorToken) => {
+    if (!tokenOverride) return;
+    const [productsRes, ordersRes] = await Promise.all([
+      apiRequest("/api/vendor/products", { auth: true, token: tokenOverride }),
+      apiRequest("/api/vendor/orders", { auth: true, token: tokenOverride }),
+    ]);
+    if (productsRes.ok) setVendorProducts(productsRes.data.products || []);
+    if (ordersRes.ok) setVendorOrders(ordersRes.data.orders || []);
+  };
+
+  useEffect(() => {
+    loadPublicData();
+  }, []);
+
+  useEffect(() => {
+    if (!vendorToken) return;
+    (async () => {
+      const meRes = await apiRequest("/api/vendor/me", { auth: true });
+      if (meRes.ok) {
+        setCurrentVendor(meRes.data.vendor);
+        await loadVendorData();
+      } else {
+        setVendorToken("");
+        localStorage.removeItem(VENDOR_TOKEN_KEY);
+      }
+    })();
+  }, [vendorToken]);
 
   const handleNavigate = (next) => {
     setPage(next);
@@ -115,8 +209,12 @@ export default function App() {
   };
 
   const addToCart = (id, qty = 1) => {
-    const food = FOODS.find((item) => item.id === id);
+    const food = allFoods.find((item) => item.id === id);
     if (!food) return;
+    if (food.stock === 0) {
+      addToast("err", "Item is sold out right now");
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((item) => item.id === id);
       if (existing) {
@@ -192,7 +290,7 @@ export default function App() {
     handleNavigate("checkout");
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     const name = document.getElementById("co-name")?.value.trim();
     const phone = document.getElementById("co-phone")?.value.trim();
     const addr = document.getElementById("co-addr")?.value.trim();
@@ -200,11 +298,35 @@ export default function App() {
       addToast("err", "Please fill in Name, Phone and Address");
       return;
     }
-    const orderId = `CB-${new Date().getFullYear()}-${getRandomInt(1000, 9999)}`;
+
+    const orderRes = await apiRequest("/api/orders", {
+      method: "POST",
+      body: {
+        customer: { name, phone, address: addr },
+        items: cart.map((item) => ({
+          id: item.id,
+          vendorId: item.vendorId || null,
+          name: item.name,
+          price: item.price,
+          qty: item.qty,
+          emoji: item.emoji,
+          rest: item.rest,
+        })),
+        totals,
+        eta: `~${getRandomInt(12, 22)} min`,
+      },
+    });
+
+    if (!orderRes.ok) {
+      addToast("err", orderRes.data?.error || "Order failed");
+      return;
+    }
+
     const eta = `~${getRandomInt(12, 22)} min`;
-    setLastOrder({ orderId, eta, rest: cart[0]?.rest || "Ajiwumi Kitchen" });
+    setLastOrder({ orderId: orderRes.data.order.code, eta });
     setCart([]);
     setPromoApplied(false);
+    await loadPublicData();
     handleNavigate("success");
   };
 
@@ -260,6 +382,152 @@ export default function App() {
 
   const handleMessage = () => {
     addToast("ok", "✅ Message sent! We'll reply shortly.");
+  };
+
+  const registerVendor = async (payload) => {
+    const res = await apiRequest("/api/vendor/register", {
+      method: "POST",
+      body: payload,
+    });
+    if (!res.ok) {
+      addToast("err", res.data?.error || "Vendor registration failed");
+      return false;
+    }
+    const { vendor, token } = res.data;
+    setVendorToken(token);
+    localStorage.setItem(VENDOR_TOKEN_KEY, token);
+    setCurrentVendor(vendor);
+    await loadPublicData();
+    await loadVendorData(token);
+    addToast("ok", "Vendor account created!");
+    return true;
+  };
+
+  const loginVendor = async (email, password) => {
+    const res = await apiRequest("/api/vendor/login", {
+      method: "POST",
+      body: { email, password },
+    });
+    if (!res.ok) {
+      addToast("err", res.data?.error || "Vendor login failed");
+      return;
+    }
+    const { vendor, token } = res.data;
+    setVendorToken(token);
+    localStorage.setItem(VENDOR_TOKEN_KEY, token);
+    setCurrentVendor(vendor);
+    await loadVendorData(token);
+    addToast("ok", `Welcome back, ${vendor.storeName}!`);
+  };
+
+  const logoutVendor = () => {
+    setVendorToken("");
+    localStorage.removeItem(VENDOR_TOKEN_KEY);
+    setCurrentVendor(null);
+    setVendorProducts([]);
+    setVendorOrders([]);
+    addToast("info", "Signed out of vendor dashboard");
+  };
+
+  const toggleVendorOpen = async () => {
+    if (!currentVendor) return;
+    const res = await apiRequest("/api/vendor/profile", {
+      method: "PUT",
+      auth: true,
+      body: { open: !currentVendor.open },
+    });
+    if (res.ok) {
+      setCurrentVendor(res.data.vendor);
+      await loadPublicData();
+      addToast("ok", currentVendor.open ? "Store marked closed" : "Store open");
+    }
+  };
+
+  const updateVendorProfile = async (updates) => {
+    const res = await apiRequest("/api/vendor/profile", {
+      method: "PUT",
+      auth: true,
+      body: updates,
+    });
+    if (res.ok) {
+      setCurrentVendor(res.data.vendor);
+      await loadPublicData();
+    } else {
+      addToast("err", res.data?.error || "Profile update failed");
+    }
+  };
+
+  const addVendorProduct = async (product) => {
+    const res = await apiRequest("/api/vendor/products", {
+      method: "POST",
+      auth: true,
+      body: product,
+    });
+    if (!res.ok) {
+      addToast("err", res.data?.error || "Unable to add product");
+      return;
+    }
+    await loadVendorData();
+    await loadPublicData();
+    addToast("ok", `${product.name} added to your menu`);
+  };
+
+  const importVendorProducts = async (items) => {
+    if (!items.length) return;
+    const results = await Promise.all(
+      items.map((item) =>
+        apiRequest("/api/vendor/products", {
+          method: "POST",
+          auth: true,
+          body: {
+            name: item.name,
+            price: Number(item.price || 0),
+            tag: item.tag || "local",
+            emoji: item.emoji || "🍲",
+            desc: item.desc,
+            time: item.time,
+            cals: item.cals,
+            stock: Number(item.stock || 0),
+          },
+        }),
+      ),
+    );
+    const successCount = results.filter((res) => res.ok).length;
+    if (successCount) {
+      await loadVendorData();
+      await loadPublicData();
+    }
+    addToast(
+      successCount ? "ok" : "err",
+      successCount ? `Imported ${successCount} products` : "CSV import failed",
+    );
+  };
+
+  const updateVendorProduct = async (id, updates) => {
+    const res = await apiRequest(`/api/vendor/products/${id}`, {
+      method: "PATCH",
+      auth: true,
+      body: updates,
+    });
+    if (!res.ok) {
+      addToast("err", res.data?.error || "Unable to update product");
+      return;
+    }
+    await loadVendorData();
+    await loadPublicData();
+  };
+
+  const updateOrderStatus = async (orderId, vendorId, status) => {
+    const res = await apiRequest(`/api/vendor/orders/${orderId}/status`, {
+      method: "PATCH",
+      auth: true,
+      body: { status, vendorId },
+    });
+    if (!res.ok) {
+      addToast("err", res.data?.error || "Unable to update status");
+      return;
+    }
+    await loadVendorData();
   };
 
   const menuTitle = restFilter ? `${restFilter} — Menu` : "Full Menu";
@@ -355,7 +623,10 @@ export default function App() {
         />
       )}
       {page === "restaurants" && (
-        <RestaurantsPage rests={RESTS} onOpenRestaurant={openRestaurant} />
+        <RestaurantsPage
+          rests={[...vendorRests, ...RESTS]}
+          onOpenRestaurant={openRestaurant}
+        />
       )}
       {page === "menu" && (
         <MenuPage
@@ -396,6 +667,25 @@ export default function App() {
         <TrackPage trackResult={trackResult} onTrack={trackOrder} />
       )}
       {page === "about" && <AboutPage onSendMessage={handleMessage} />}
+      {page === "vendor" && (
+        <VendorPage
+          vendors={publicVendors}
+          currentVendor={currentVendor}
+          onRegisterVendor={registerVendor}
+          onLoginVendor={loginVendor}
+          onLogoutVendor={logoutVendor}
+          products={vendorProducts}
+          orders={vendorOrders}
+          categories={CATEGORIES}
+          onAddProduct={addVendorProduct}
+          onUpdateProduct={updateVendorProduct}
+          onUpdateOrderStatus={updateOrderStatus}
+          onToggleVendorOpen={toggleVendorOpen}
+          onNotify={addToast}
+          onUpdateVendorProfile={updateVendorProfile}
+          onImportProducts={importVendorProducts}
+        />
+      )}
 
       <Footer onNavigate={handleNavigate} />
     </div>

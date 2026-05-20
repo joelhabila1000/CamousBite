@@ -4,17 +4,26 @@
       <div className="foot-grid">
         <div className="foot-logo">
           <div className="nav-logo" style={{ fontSize: "1.6rem" }}>
-            <span className="c1">Campus</span>
-            <span className="c2">Bite</span> 🍕
+            <span className="c1">J</span>
+            <span className="c2">ORDER</span> 🍕
           </div>
           <p>
-            Your university's favourite food delivery platform. Fast, fresh, and always on campus time.
+            Your university's favourite food delivery platform. Fast, fresh, and
+            always on campus time.
           </p>
           <div className="social-row">
-            <a className="soc-btn" href="#">📘</a>
-            <a className="soc-btn" href="#">📸</a>
-            <a className="soc-btn" href="#">🐦</a>
-            <a className="soc-btn" href="#">▶️</a>
+            <a className="soc-btn" href="facebook.com">
+              📘
+            </a>
+            <a className="soc-btn" href="instagram.com">
+              📸
+            </a>
+            <a className="soc-btn" href="X.com">
+              🐦
+            </a>
+            <a className="soc-btn" href="Youtube.com">
+              ▶️
+            </a>
           </div>
         </div>
         <div className="foot-col">
@@ -55,7 +64,7 @@
           <h5>Partners</h5>
           <ul>
             <li>
-              <a>Become a Vendor</a>
+              <a onClick={() => onNavigate("vendor")}>Become a Vendor</a>
             </li>
             <li>
               <a>Become a Rider</a>
@@ -63,14 +72,11 @@
             <li>
               <a>Advertise</a>
             </li>
-            <li>
-              <a>Careers</a>
-            </li>
           </ul>
         </div>
       </div>
       <div className="foot-bottom">
-        <p>© 2025 CampusBite · Made with ❤️ for university life</p>
+        <p>© 2026 CampusBite.</p>
         <p>Privacy Policy · Terms of Service</p>
       </div>
     </footer>
